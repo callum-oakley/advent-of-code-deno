@@ -1,0 +1,8 @@
+{
+  "imports": {
+    "std/": "https://deno.land/std@0.182.0/"
+  },
+  "tasks": {
+    "run": "deno run --allow-read --allow-write --allow-net --allow-hrtime src/main.js"
+  }
+}
