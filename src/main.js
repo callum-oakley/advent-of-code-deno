@@ -1,3 +1,4 @@
+import { assertEquals } from "std/testing/asserts.ts";
 import * as fs from "std/fs/mod.ts";
 
 const root = new URL(import.meta.resolve("./..")).pathname;
@@ -69,7 +70,7 @@ async function getAnswer(year, day, part) {
 
 function formatTime(ms) {
   if (Math.round(ms * 1000) < 1000) {
-    return Math.round(ms * 1000).toString().padStart(3) + "μs"
+    return Math.round(ms * 1000).toString().padStart(3) + "μs";
   } else if (Math.round(ms) < 1000) {
     return Math.round(ms).toString().padStart(3) + "ms";
   } else {
@@ -89,6 +90,7 @@ async function runDay(year, day) {
     await solution.test();
   }
 
+  let totalElapsed = 0;
   for (const part of [1, 2]) {
     const partN = solution[`part${part}`];
     if (partN) {
@@ -97,36 +99,50 @@ async function runDay(year, day) {
       const elapsed = performance.now() - start;
 
       const expectedAnswer = await getAnswer(year, day, part);
+      assertEquals(answer, expectedAnswer, `${year} ${day} ${part}`);
 
       console.log(
-        `${year}/${day}/${part} ${formatTime(elapsed)} ${answer.padEnd(60)} ${
-          answer === expectedAnswer ? "OK" : `WRONG ${expectedAnswer}`
+        `${year} ${day} ${part}   ${answer.padEnd(60)}   ${
+          formatTime(elapsed)
         }`,
       );
 
-      if (answer !== expectedAnswer) {
-        Deno.exit(1);
-      }
+      totalElapsed += elapsed;
     }
   }
+
+  return totalElapsed;
 }
 
 async function runYear(year) {
+  let elapsed = 0;
   for (const day of days(year)) {
-    await runDay(year, day);
+    elapsed += await runDay(year, day);
   }
+  console.log("".padEnd(80, "\u2500"));
+  console.log(`${year} ** *   ${"".padEnd(60)}   ${formatTime(elapsed)}`);
+  return elapsed;
 }
 
 async function run() {
+  let elapsed = 0;
   for (const year of years()) {
-    await runYear(year);
+    elapsed += await runYear(year);
+    console.log("".padEnd(80, "\u2550"));
   }
+  console.log(`**** ** *   ${"".padEnd(60)}   ${formatTime(elapsed)}`);
 }
 
+console.log("".padEnd(80, "\u2500"));
 if (Deno.args.length === 0) {
   await run();
 } else if (Deno.args.length === 1) {
   await runYear(Deno.args[0]);
 } else if (Deno.args.length === 2) {
-  await runDay(Deno.args[0], Deno.args[1].toString().padStart(2, "0"));
+  const year = Deno.args[0];
+  const day = Deno.args[1].toString().padStart(2, "0");
+  const elapsed = await runDay(year, day);
+  console.log("".padEnd(80, "\u2500"));
+  console.log(`${year} ${day} *   ${"".padEnd(60)}   ${formatTime(elapsed)}`);
 }
+console.log("".padEnd(80, "\u2500"));
